@@ -2,7 +2,7 @@ use v6;
 
 BEGIN { @*INC.push: 'lib' }
 
-use IRC::Simple;
+use IRC::Client;
 use Mubot;
 
 my $mubot = Mubot.new(:server('irc.freenode.net'),
