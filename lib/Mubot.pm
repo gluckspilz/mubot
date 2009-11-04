@@ -53,7 +53,7 @@ method parse(Str $message is rw) {
 	my $command = $message.shift;
 	my $params = $message;
 	if $command ~~ 'help' {
-		self.cmd-karma($params);
+		self.cmd-help($params);
 	} elsif $command ~~ 'karma' {
 		self.cmd-karma($params);
 	} elsif $command ~~ 'purge' {
@@ -66,7 +66,7 @@ method parse(Str $message is rw) {
 }
 
 method cmd-help(@params) {
-	return "usage: karma [name] | purge <name> | link <nick> <alternative>";
+	return "usage: $!nick: [karma [name] | purge <name> | link <nick> <alternative>] | <name>++ | <name>--";
 }
 
 method cmd-karma(@params) {
