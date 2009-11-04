@@ -1,4 +1,4 @@
-use IRC::Simple;
+use IRC::Client;
 use JSON::Tiny;
 
 class Mubot;
@@ -13,7 +13,7 @@ has %.karma is rw;
 has %.links is rw;
 
 method init {
-	$!irc = IRC::Simple.new;
+	$!irc = IRC::Client.new;
 	$!irc.connect($!server);
 	$!irc.user($!user);
 	$!irc.nick($!nick);

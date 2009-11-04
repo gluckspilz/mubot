@@ -1,3 +1,2 @@
-# Needs IRC::Simple from rssbot
-rssbot
+irc-client
 json
