@@ -8,7 +8,9 @@ has $!server;
 has $!user;
 has $!nick;
 has @!channels;
+
 has %.karma is rw;
+has %.links is rw;
 
 method init {
 	$!irc = IRC::Simple.new;
@@ -18,9 +20,12 @@ method init {
 	for @!channels -> $channel {
 		$!irc.join($channel);
 	}
-	my $file = open('karma.log', :r);
-	%.karma = from-json($file.slurp);
-	$file.close;
+	my $karma = open('karma.log', :r);
+	%.karma = from-json($karma.slurp);
+	$karma.close;
+	my $links = open('links.log', :r);
+	%.links = from-json($links.slurp);
+	$links.close;
 }
 
 method read {
@@ -53,13 +58,15 @@ method parse(Str $message is rw) {
 		self.cmd-karma($params);
 	} elsif $command ~~ 'purge' {
 		self.cmd-purge($params);
+	} elsif $command ~~ 'link' {
+		self.cmd-link($params);
 	} else {
 		return "Sorry, I don't understand that command";
 	}
 }
 
 method cmd-help(@params) {
-	return "usage: karma [name] | purge <name>";
+	return "usage: karma [name] | purge <name> | link <nick> <alternative>";
 }
 
 method cmd-karma(@params) {
@@ -93,12 +100,41 @@ method cmd-purge(@params) {
 	return "$who\'s karma has been reset";
 }
 
-method increment(Str $name) {
+method cmd-link(@params) {
+	if @params < 2 {
+		return "Sorry, link requires 2 parameters";
+	}
+	my $nick = @params.shift;
+	my $alternative = @params.join(' ');
+	$alternative .= subst(/ '(' || ')' /, '', :g);
+	$alternative .= trim;
+	if %.links.exists($alternative) {
+		return "$alternative is already an alias of "~%.links<<$alternative>>;
+	} else {
+		%.links.push($alternative, $nick);
+	}
+	if %.karma.exists($alternative) {
+		%.karma<<$nick>> += %.karma<<$alternative>>;
+		%.karma.delete($alternative);
+		self.export-karma;
+	}
+	self.export-links;
+	return "$alternative is now an alias for $nick ($nick will gain any karma given to $alternative)";
+}
+
+
+method increment(Str $name is rw) {
+	if %.links.exists($name) {
+		$name = %.links<<$name>>;
+	}
 	%.karma<<$name>>++;
 	self.export-karma;
 }
 
-method decrement(Str $name) {
+method decrement(Str $name is rw) {
+	if %.links.exists($name) {
+		$name = %.links<<$name>>;
+	}
 	%.karma<<$name>>--;
 	self.export-karma;
 }
@@ -106,6 +142,12 @@ method decrement(Str $name) {
 method export-karma {
 	my $file = open('karma.log', :w);
 	$file.print(to-json(%.karma));
+	$file.close;
+}
+
+method export-links {
+	my $file = open('links.log', :w);
+	$file.print(to-json(%.links));
 	$file.close;
 }
 
