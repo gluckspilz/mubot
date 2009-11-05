@@ -60,6 +60,8 @@ method parse(Str $message is rw) {
 		self.cmd-purge($params);
 	} elsif $command ~~ 'link' {
 		self.cmd-link($params);
+	} elsif $command ~~ 'unlink' {
+		self.cmd-unlink($params);
 	} else {
 		return "Sorry, I don't understand that command";
 	}
@@ -74,6 +76,9 @@ method cmd-karma(@params) {
 		my $name = @params.join(' ').trim;
 		if %.karma.exists($name) {
 			return "$name has a karma of " ~ %.karma<<$name>>;
+		} elsif %.links.exists($name) {
+			my $real = %.links<<$name>>;
+			return "$real has a karma of " ~ %.karma<<$real>>;
 		} else {
 			return "$name is of an unknown quantity";
 		}
@@ -110,6 +115,8 @@ method cmd-link(@params) {
 	$alternative .= trim;
 	if %.links.exists($alternative) {
 		return "$alternative is already an alias of "~%.links<<$alternative>>;
+	} elsif %.links.exists($nick) {
+		return "$nick is an alias of {%.links<<$nick>>} and can not be set as a master nick";     
 	} else {
 		%.links.push($alternative, $nick);
 	}
@@ -121,6 +128,21 @@ method cmd-link(@params) {
 	self.export-links;
 	return "$alternative is now an alias for $nick ($nick will gain any karma given to $alternative)";
 }
+
+method cmd-unlink(@params) {
+	if @params < 1 {
+		return "Sorry, unlink requires 1 parameter";
+	}
+	my $nick = @params.join(' ');
+	unless %.links.exists($nick) {
+		return "$nick is not an alias of anyone";
+	}
+	my $alternative = %.links<<$nick>>;
+	%.links.delete($nick);
+	self.export-links;
+	return "$nick is no longer an alias of $alternative";
+}
+
 
 
 method increment(Str $name is rw) {
