@@ -48,22 +48,15 @@ method read {
 	}	
 }
 
-method parse(Str $message is rw) {
-	$message .= split(' ');
-	my $command = $message.shift;
-	my $params = $message;
-	if $command ~~ 'help' {
-		self.cmd-help($params);
-	} elsif $command ~~ 'karma' {
-		self.cmd-karma($params);
-	} elsif $command ~~ 'purge' {
-		self.cmd-purge($params);
-	} elsif $command ~~ 'link' {
-		self.cmd-link($params);
-	} elsif $command ~~ 'unlink' {
-		self.cmd-unlink($params);
-	} else {
-		return "Sorry, I don't understand that command";
+method parse(Str $message) {
+	my ($command, @params) = $message.split(/\s+/);
+	given $command {
+		when 'help' { self.cmd-help(@params); }
+		when 'karma' { self.cmd-karma(@params); }
+		when 'purge' { self.cmd-purge(@params); }
+		when 'link' { self.cmd-link(@params); }
+		when 'unlink' { self.cmd-unlink(@params); }
+		when * { "Sorry, I don't understand that command"; }
 	}
 }
 
