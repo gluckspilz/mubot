@@ -156,12 +156,14 @@ method decrement(Str $name is rw) {
 }
 
 method export-karma {
+	run "cp karma.log karma.log.bak"; # XXX platform specific
 	my $file = open('karma.log', :w);
 	$file.print(to-json(%.karma));
 	$file.close;
 }
 
 method export-links {
+	run "cp links.log links.log.bak"; # XXX platform specific
 	my $file = open('links.log', :w);
 	$file.print(to-json(%.links));
 	$file.close;
