@@ -35,17 +35,20 @@ method read {
 		my $reply = self.parse($d<msg>);
 		$!irc.privmsg($d<channel>, $reply);
 		# XXX FIXME: these could probably be tidied up
-	} elsif $msg ~~ / [ <wb> (\w*?) '++' 		# foo++
+		return;
+	}
+	my $increment = / [ <wb> (\w*?) '++' 		# foo++
 			| '(' <wb> (.*?) ')' '++'	# (foo bar)++
 	       		| '++' (\w*) <wb>		# ++foo
-			| '++' '(' (.*?) ')' ] / {	# ++(foo bar)
-		self.increment($0.Str);
-	} elsif $msg ~~ / [ <wb> (\w*?) '--'		# foo--
+			| '++' '(' (.*?) ')' ] /;	# ++(foo bar)
+
+	my $decrement = / [ <wb> (\w*?) '--'		# foo--
 			| '(' <wb> (.*?) ')' '--'	# (foo bar)--
 	       		| '--' (\w*) <wb>		# --foo
-			| '--' '(' (.*?) ')' ] / {	# --(foo bar)
-		self.decrement($0.Str);
-	}	
+			| '--' '(' (.*?) ')' ] /;	# --(foo bar)
+	my $clean = / '++' | '--' | '(' | ')' /;
+	for $msg.comb($increment) { self.increment($_.subst($clean, '', :g)); }
+	for $msg.comb($decrement) { self.decrement($_.subst($clean, '', :g)); }
 }
 
 method parse(Str $message) {
@@ -135,8 +138,6 @@ method cmd-unlink(@params) {
 	self.export-links;
 	return "$nick is no longer an alias of $alternative";
 }
-
-
 
 method increment(Str $name is rw) {
 	if %.links.exists($name) {
