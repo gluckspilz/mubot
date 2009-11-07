@@ -76,7 +76,7 @@ method cmd-karma(@params) {
 			my $real = %.links<<$name>>;
 			return "$real has a karma of " ~ %.karma<<$real>>;
 		} else {
-			return "$name is of an unknown quantity";
+			return "$name has not yet made an impact on this world";
 		}
 	} else {
 		# XXX FIXME: want to list the top 10 highest values
@@ -96,9 +96,13 @@ method cmd-purge(@params) {
 		return "Sorry, purge requires 1 parameter";
 	}
 	my $who = @params.join(' ');
+	return "$who has nothing to purge" unless %.karma.exists($who);
+	my $backup = open('purge.log', :a);
+	$backup.print("$who = {%.karma<<$who>>}\n");
+	$backup.close;
 	%.karma.delete($who);
 	self.export-karma;
-	return "$who\'s karma has been reset";
+	return "$who has vanished down the memory hole";
 }
 
 method cmd-link(@params) {
@@ -113,6 +117,8 @@ method cmd-link(@params) {
 		return "$alternative is already an alias of "~%.links<<$alternative>>;
 	} elsif %.links.exists($nick) {
 		return "$nick is an alias of {%.links<<$nick>>} and can not be set as a master nick";     
+	} elsif %.links.reverse.exists($nick) {
+		return "$nick is a master nick and can not be set as an alias";
 	} else {
 		%.links.push($alternative, $nick);
 	}
